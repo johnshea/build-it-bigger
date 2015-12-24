@@ -1,44 +1,22 @@
 package com.udacity.gradle.builditbigger;
 
-import android.app.Activity;
-import android.app.Instrumentation;
 import android.test.ActivityInstrumentationTestCase2;
-import android.test.TouchUtils;
 import android.test.suitebuilder.annotation.MediumTest;
-import android.widget.Button;
-import android.widget.TextView;
+import android.util.Log;
 
-import com.sheajohnh.android.jokedisplay.JokeDisplayActivity;
-
-/**
- * <a href="http://d.android.com/tools/testing/testing_android.html">Testing Fundamentals</a>
- */
-//public class ApplicationTest extends ApplicationTestCase<Application> {
-//    public ApplicationTest() {
-//        super(Application.class);
-//    }
-//
-//
-//}
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 public class ApplicationTest extends ActivityInstrumentationTestCase2<MainActivity> {
 
-    Activity mMainActivity;
-    Activity mJokeDisplayActivity;
-
-    Button mLoadJokeButton;
-    TextView mDisplayJokeTextView;
-
+    String mJokeResult = null;
+    Boolean mAsyncTaskCompleted = false;
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
 
         setActivityInitialTouchMode(true);
-
-        mMainActivity = getActivity();
-        mLoadJokeButton = (Button) mMainActivity.findViewById(R.id.loadJokeButton);
-        mDisplayJokeTextView = (TextView) mMainActivity.findViewById(R.id.jokeTextView);
 
     }
 
@@ -53,25 +31,34 @@ public class ApplicationTest extends ActivityInstrumentationTestCase2<MainActivi
     @MediumTest
     public void testCheckAsyncTask() {
 
-        Instrumentation.ActivityMonitor jokeDisplayActivityMonitor =
-                getInstrumentation().addMonitor(JokeDisplayActivity.class.getName(), null, false);
+        final CountDownLatch countDownLatch = new CountDownLatch(1);
 
-        TouchUtils.clickView(this, mLoadJokeButton);
+        EndpointsAsyncTask.OnAsyncCompletedListener listener = new EndpointsAsyncTask.OnAsyncCompletedListener() {
+            @Override
+            public void onCompleted(String result) {
 
-        JokeDisplayActivity jokeDisplayActivity =  (JokeDisplayActivity)
-                jokeDisplayActivityMonitor.waitForActivityWithTimeout(10000);
+                mJokeResult = result;
+                mAsyncTaskCompleted = true;
 
-        assertNotNull("jokeDisplayActivity is null", jokeDisplayActivity);
-        assertEquals("Monitor for JokeDisplayActivity has not been called",
-                1, jokeDisplayActivityMonitor.getHits());
+                countDownLatch.countDown();
+            }
+        };
 
-        mDisplayJokeTextView = (TextView) jokeDisplayActivity.findViewById(R.id.jokeTextView);
+        EndpointsAsyncTask endpointsAsyncTask = new EndpointsAsyncTask(listener);
+        endpointsAsyncTask.execute();
 
-        assertNotNull("jokeDisplayActivity is null", jokeDisplayActivity);
-        assertNotNull("mDisplayJokeTextView is null", mDisplayJokeTextView);
-        assertTrue("Joke text was empty", !mDisplayJokeTextView.getText().equals(""));
+        try {
+            countDownLatch.await(10000, TimeUnit.MILLISECONDS);
+        } catch (Exception e) {
+            Log.e("testCheckAsyncTask", "CountDownLatch threw an exception: "
+                    + e.getMessage());
+        }
 
-        getInstrumentation().removeMonitor(jokeDisplayActivityMonitor);
+        assertEquals("AsyncTask did not complete",
+                Boolean.TRUE, mAsyncTaskCompleted);
+        assertNotNull("AsyncTask returned a null value instead of a joke",
+                mJokeResult);
+
     }
 
 }

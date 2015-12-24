@@ -1,8 +1,6 @@
 package com.udacity.gradle.builditbigger;
 
-import android.content.Context;
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
@@ -10,15 +8,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
-import com.google.api.client.extensions.android.http.AndroidHttp;
-import com.google.api.client.extensions.android.json.AndroidJsonFactory;
-import com.google.api.client.googleapis.services.AbstractGoogleClientRequest;
-import com.google.api.client.googleapis.services.GoogleClientRequestInitializer;
 import com.sheajohnh.android.jokedisplay.JokeDisplayActivity;
-import com.sheajohnh.myapplication.backend.myApi.MyApi;
-
-import java.io.IOException;
-
 
 public class MainActivity extends ActionBarActivity {
 
@@ -27,7 +17,6 @@ public class MainActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
     }
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -52,56 +41,20 @@ public class MainActivity extends ActionBarActivity {
     }
 
     public void tellJoke(View view){
-//        Toast.makeText(this, "derp", Toast.LENGTH_SHORT).show();
 
-//        JokeMaker jokeMaker = new JokeMaker();
-//        String currentJoke = jokeMaker.getJoke();
+        EndpointsAsyncTask.OnAsyncCompletedListener myListener = new EndpointsAsyncTask.OnAsyncCompletedListener() {
+            @Override
+            public void onCompleted(String result) {
+                Toast.makeText(MainActivity.this, result, Toast.LENGTH_LONG).show();
 
-//        Toast.makeText(this, currentJoke, Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(MainActivity.this, JokeDisplayActivity.class);
+                intent.putExtra("joke", result);
+                MainActivity.this.startActivity(intent);
+            }
+        };
 
-//        Intent intent = new Intent(this, JokeDisplayActivity.class);
-//        intent.putExtra("joke", currentJoke);
-//        startActivity(intent);
-
-        new EndpointsAsyncTask().execute(this);
+        EndpointsAsyncTask endpointsAsyncTask = new EndpointsAsyncTask(myListener);
+        endpointsAsyncTask.execute();
     }
 
-}
-
-class EndpointsAsyncTask extends AsyncTask<Context, Void, String> {
-    private static MyApi myApiService = null;
-    private Context context;
-
-    @Override
-    protected String doInBackground(Context...params) {
-        if(myApiService == null) {
-            MyApi.Builder builder = new MyApi.Builder(AndroidHttp.newCompatibleTransport(),
-                    new AndroidJsonFactory(), null)
-                    .setRootUrl("http://10.0.3.2:8080/_ah/api")
-                    .setGoogleClientRequestInitializer(new GoogleClientRequestInitializer() {
-                        @Override
-                        public void initialize(AbstractGoogleClientRequest<?> abstractGoogleClientRequest) throws IOException {
-                            abstractGoogleClientRequest.setDisableGZipContent(true);
-                        }
-                    });
-            myApiService = builder.build();
-        }
-
-        context = params[0];
-
-        try {
-            return myApiService.getJoke().execute().getData();
-        } catch (IOException e) {
-            return e.getMessage();
-        }
-    }
-
-    @Override
-    protected void onPostExecute(String result) {
-        Toast.makeText(context, result, Toast.LENGTH_LONG).show();
-
-        Intent intent = new Intent(context, JokeDisplayActivity.class);
-        intent.putExtra("joke", result);
-        context.startActivity(intent);
-    }
 }
