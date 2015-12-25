@@ -8,14 +8,33 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
+import com.google.android.gms.ads.AdListener;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.InterstitialAd;
 import com.sheajohnh.android.jokedisplay.JokeDisplayActivity;
 
 public class MainActivity extends ActionBarActivity {
+
+    InterstitialAd mInterstitialAd;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        mInterstitialAd = new InterstitialAd(this);
+        mInterstitialAd.setAdUnitId("ca-app-pub-3940256099942544/1033173712");
+
+        requestNewInterstitial();
+
+    }
+
+    private void requestNewInterstitial() {
+        AdRequest adRequest = new AdRequest.Builder()
+                .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
+                .build();
+
+        mInterstitialAd.loadAd(adRequest);
     }
 
     @Override
@@ -42,7 +61,7 @@ public class MainActivity extends ActionBarActivity {
 
     public void tellJoke(View view){
 
-        EndpointsAsyncTask.OnAsyncCompletedListener myListener = new EndpointsAsyncTask.OnAsyncCompletedListener() {
+        final EndpointsAsyncTask.OnAsyncCompletedListener myListener = new EndpointsAsyncTask.OnAsyncCompletedListener() {
             @Override
             public void onCompleted(String result) {
                 Toast.makeText(MainActivity.this, result, Toast.LENGTH_LONG).show();
@@ -53,8 +72,28 @@ public class MainActivity extends ActionBarActivity {
             }
         };
 
-        EndpointsAsyncTask endpointsAsyncTask = new EndpointsAsyncTask(myListener);
-        endpointsAsyncTask.execute();
+        if (mInterstitialAd.isLoaded()) {
+
+            mInterstitialAd.setAdListener(new AdListener() {
+                @Override
+                public void onAdClosed() {
+                    super.onAdClosed();
+
+                    EndpointsAsyncTask endpointsAsyncTask = new EndpointsAsyncTask(myListener);
+                    endpointsAsyncTask.execute();
+
+                    requestNewInterstitial();
+                }
+            });
+
+            mInterstitialAd.show();
+
+        } else {
+
+            EndpointsAsyncTask endpointsAsyncTask = new EndpointsAsyncTask(myListener);
+            endpointsAsyncTask.execute();
+
+        }
     }
 
 }
