@@ -6,6 +6,7 @@ import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.google.android.gms.ads.AdListener;
@@ -16,11 +17,14 @@ import com.sheajohnh.android.jokedisplay.JokeDisplayActivity;
 public class MainActivity extends ActionBarActivity {
 
     InterstitialAd mInterstitialAd;
+    ProgressBar mProgressBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        mProgressBar = (ProgressBar) findViewById(R.id.progressBar);
 
         mInterstitialAd = new InterstitialAd(this);
         mInterstitialAd.setAdUnitId(getString(R.string.interstitial_ad_unit_id));
@@ -68,6 +72,9 @@ public class MainActivity extends ActionBarActivity {
 
                 Intent intent = new Intent(MainActivity.this, JokeDisplayActivity.class);
                 intent.putExtra("joke", result);
+
+                mProgressBar.setVisibility(View.INVISIBLE);
+
                 MainActivity.this.startActivity(intent);
             }
         };
@@ -79,6 +86,8 @@ public class MainActivity extends ActionBarActivity {
                 public void onAdClosed() {
                     super.onAdClosed();
 
+                    mProgressBar.setVisibility(View.VISIBLE);
+
                     EndpointsAsyncTask endpointsAsyncTask = new EndpointsAsyncTask(myListener);
                     endpointsAsyncTask.execute();
 
@@ -89,6 +98,8 @@ public class MainActivity extends ActionBarActivity {
             mInterstitialAd.show();
 
         } else {
+
+            mProgressBar.setVisibility(View.VISIBLE);
 
             EndpointsAsyncTask endpointsAsyncTask = new EndpointsAsyncTask(myListener);
             endpointsAsyncTask.execute();
