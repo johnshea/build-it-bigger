@@ -6,8 +6,6 @@ import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.ProgressBar;
-import android.widget.Toast;
 
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
@@ -17,20 +15,31 @@ import com.sheajohnh.android.jokedisplay.JokeDisplayActivity;
 public class MainActivity extends ActionBarActivity {
 
     InterstitialAd mInterstitialAd;
-    ProgressBar mProgressBar;
+    View mFragment;
+    View mProgressLayout;
+    Boolean mReturningFromInterstitial = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mProgressBar = (ProgressBar) findViewById(R.id.progressBar);
+        mProgressLayout = findViewById(R.id.progressLayout);
+        mFragment = findViewById(R.id.fragment);
 
         mInterstitialAd = new InterstitialAd(this);
         mInterstitialAd.setAdUnitId(getString(R.string.interstitial_ad_unit_id));
 
         requestNewInterstitial();
+    }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        if ( !mReturningFromInterstitial ) {
+            mFragment.setVisibility(View.VISIBLE);
+        }
     }
 
     private void requestNewInterstitial() {
@@ -68,12 +77,12 @@ public class MainActivity extends ActionBarActivity {
         final EndpointsAsyncTask.OnAsyncCompletedListener myListener = new EndpointsAsyncTask.OnAsyncCompletedListener() {
             @Override
             public void onCompleted(String result) {
-                Toast.makeText(MainActivity.this, result, Toast.LENGTH_LONG).show();
-
                 Intent intent = new Intent(MainActivity.this, JokeDisplayActivity.class);
                 intent.putExtra("joke", result);
 
-                mProgressBar.setVisibility(View.INVISIBLE);
+                mProgressLayout.setVisibility(View.INVISIBLE);
+
+                mReturningFromInterstitial = false;
 
                 MainActivity.this.startActivity(intent);
             }
@@ -86,25 +95,31 @@ public class MainActivity extends ActionBarActivity {
                 public void onAdClosed() {
                     super.onAdClosed();
 
-                    mProgressBar.setVisibility(View.VISIBLE);
+                    mProgressLayout.setVisibility(View.VISIBLE);
 
                     EndpointsAsyncTask endpointsAsyncTask = new EndpointsAsyncTask(myListener);
                     endpointsAsyncTask.execute();
 
                     requestNewInterstitial();
                 }
+
+                @Override
+                public void onAdOpened() {
+                    super.onAdOpened();
+
+                    mFragment.setVisibility(View.INVISIBLE);
+                }
             });
+
+            mReturningFromInterstitial = true;
 
             mInterstitialAd.show();
 
         } else {
-
-            mProgressBar.setVisibility(View.VISIBLE);
 
             EndpointsAsyncTask endpointsAsyncTask = new EndpointsAsyncTask(myListener);
             endpointsAsyncTask.execute();
 
         }
     }
-
 }

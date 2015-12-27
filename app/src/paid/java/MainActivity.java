@@ -12,10 +12,23 @@ import com.sheajohnh.android.jokedisplay.JokeDisplayActivity;
 
 public class MainActivity extends ActionBarActivity {
 
+    View mFragment;
+    View mProgressLayout;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        mProgressLayout = findViewById(R.id.progressLayout);
+        mFragment = findViewById(R.id.fragment);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        mFragment.setVisibility(View.VISIBLE);
     }
 
     @Override
@@ -42,13 +55,17 @@ public class MainActivity extends ActionBarActivity {
 
     public void tellJoke(View view){
 
+        mFragment.setVisibility(View.INVISIBLE);
+        mProgressLayout.setVisibility(View.VISIBLE);
+
         EndpointsAsyncTask.OnAsyncCompletedListener myListener = new EndpointsAsyncTask.OnAsyncCompletedListener() {
             @Override
             public void onCompleted(String result) {
-                Toast.makeText(MainActivity.this, result, Toast.LENGTH_LONG).show();
+                mProgressLayout.setVisibility(View.INVISIBLE);
 
                 Intent intent = new Intent(MainActivity.this, JokeDisplayActivity.class);
                 intent.putExtra("joke", result);
+
                 MainActivity.this.startActivity(intent);
             }
         };
@@ -56,5 +73,4 @@ public class MainActivity extends ActionBarActivity {
         EndpointsAsyncTask endpointsAsyncTask = new EndpointsAsyncTask(myListener);
         endpointsAsyncTask.execute();
     }
-
 }
