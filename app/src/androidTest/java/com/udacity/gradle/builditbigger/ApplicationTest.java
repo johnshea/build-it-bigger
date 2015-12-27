@@ -7,7 +7,7 @@ import android.util.Log;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-public class ApplicationTest extends ActivityInstrumentationTestCase2<MainActivity> {
+public class ApplicationTest extends ActivityInstrumentationTestCase2<com.udacity.gradle.builditbigger.MainActivity> {
 
     String mJokeResult = null;
     Boolean mAsyncTaskCompleted = false;
@@ -21,11 +21,11 @@ public class ApplicationTest extends ActivityInstrumentationTestCase2<MainActivi
     }
 
     public ApplicationTest() {
-        super(MainActivity.class);
+        super(com.udacity.gradle.builditbigger.MainActivity.class);
     }
 
     public ApplicationTest(Class activityClass) {
-        super(MainActivity.class);
+        super(com.udacity.gradle.builditbigger.MainActivity.class);
     }
 
     @MediumTest

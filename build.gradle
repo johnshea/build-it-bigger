@@ -17,3 +17,32 @@ allprojects {
         jcenter()
     }
 }
+
+task startGceServer {
+    dependsOn = [':backend:appengineRun']
+    project(':backend').afterEvaluate { backend ->
+        backend.extensions.appengine.daemon = true
+    }
+    doLast {
+        println 'Starting GCE server'
+    }
+}
+
+task runTest {
+    dependsOn 'startGceServer'
+    mustRunAfter ':backend:appengineRun'
+    doLast {
+        println 'Running tests'
+    }
+}
+
+runTest {}.finalizedBy ':app:connectedAndroidTest'
+
+task runCustomTestTask {
+    dependsOn 'runTest'
+    doLast {
+        println 'Stopping GCE server'
+    }
+}
+
+runCustomTestTask.finalizedBy ':backend:appengineStop'
